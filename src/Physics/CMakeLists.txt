@@ -6,6 +6,8 @@ set(MagnumPhysics_SRCS
     Line.cpp
     Plane.cpp
     Point.cpp
+    RigidBody.cpp
+    RigidBodyGroup.cpp
     ShapedObject.cpp
     ShapedObjectGroup.cpp
     ShapeGroup.cpp
@@ -19,6 +21,8 @@ set(MagnumPhysics_HEADERS
     LineSegment.h
     Plane.h
     Point.h
+    RigidBody.h
+    RigidBodyGroup.h
     ShapedObject.h
     ShapedObjectGroup.h
     ShapeGroup.h
