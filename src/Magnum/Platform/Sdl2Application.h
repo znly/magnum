@@ -326,6 +326,7 @@ class Sdl2Application {
             char** argv;    /**< @brief Argument values */
         };
 
+        class WindowConfiguration;
         class Configuration;
         class InputEvent;
         class KeyEvent;
@@ -707,46 +708,12 @@ class Sdl2Application {
 };
 
 /**
-@brief Configuration
+@brief Window configuration
 
-The created window is always with double-buffered OpenGL context and 24bit
-depth buffer.
-@see @ref Sdl2Application(), @ref createContext(), @ref tryCreateContext()
+@see @ref Configuration
 */
-class Sdl2Application::Configuration {
+class Sdl2Application::WindowConfiguration {
     public:
-        #ifndef CORRADE_TARGET_EMSCRIPTEN
-        /**
-         * @brief Context flag
-         *
-         * @note Not available in @ref CORRADE_TARGET_EMSCRIPTEN "Emscripten".
-         * @see @ref Flags, @ref setFlags(), @ref Context::Flag
-         * @todo re-enable when Emscripten has proper SDL2 support
-         */
-        enum class Flag: int {
-            Debug = SDL_GL_CONTEXT_DEBUG_FLAG,  /**< Create debug context */
-
-            /** Create context with robust access */
-            RobustAccess = SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG,
-
-            /** Create context with reset isolation */
-            ResetIsolation = SDL_GL_CONTEXT_RESET_ISOLATION_FLAG
-        };
-
-        /**
-         * @brief Context flags
-         *
-         * @note Not available in @ref CORRADE_TARGET_EMSCRIPTEN "Emscripten".
-         * @see @ref setFlags(), @ref Context::Flags
-         */
-        #ifndef DOXYGEN_GENERATING_OUTPUT
-        typedef Containers::EnumSet<Flag, SDL_GL_CONTEXT_DEBUG_FLAG|
-            SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG|SDL_GL_CONTEXT_RESET_ISOLATION_FLAG> Flags;
-        #else
-        typedef Containers::EnumSet<Flag> Flags;
-        #endif
-        #endif
-
         /**
          * @brief Window flag
          *
@@ -794,8 +761,8 @@ class Sdl2Application::Configuration {
         typedef Containers::EnumSet<WindowFlag> WindowFlags;
         #endif
 
-        /*implicit*/ Configuration();
-        ~Configuration();
+        /*implicit*/ WindowConfiguration();
+        ~WindowConfiguration();
 
         #if !defined(CORRADE_TARGET_EMSCRIPTEN) && !defined(CORRADE_TARGET_IOS)
         /**
@@ -818,12 +785,12 @@ class Sdl2Application::Configuration {
          *      separately in platform-specific configuration file.
          */
         #if !defined(CORRADE_TARGET_EMSCRIPTEN) && !defined(CORRADE_TARGET_IOS)
-        Configuration& setTitle(std::string title) {
+        WindowConfiguration& setTitle(std::string title) {
             _title = std::move(title);
             return *this;
         }
         #else
-        template<class T> Configuration& setTitle(const T&) { return *this; }
+        template<class T> WindowConfiguration& setTitle(const T&) { return *this; }
         #endif
 
         /** @brief Window size */
@@ -838,7 +805,7 @@ class Sdl2Application::Configuration {
          * @ref WindowFlag::AllowHighDpi, but not necessarily native display
          * resolution (you have to set it explicitly).
          */
-        Configuration& setSize(const Vector2i& size) {
+        WindowConfiguration& setSize(const Vector2i& size) {
             _size = size;
             return *this;
         }
@@ -852,10 +819,60 @@ class Sdl2Application::Configuration {
          *
          * Default are none.
          */
-        Configuration& setWindowFlags(WindowFlags flags) {
+        WindowConfiguration& setWindowFlags(WindowFlags flags) {
             _windowFlags = flags;
             return *this;
         }
+
+    private:
+        #if !defined(CORRADE_TARGET_EMSCRIPTEN) && !defined(CORRADE_TARGET_IOS)
+        std::string _title;
+        #endif
+        Vector2i _size;
+        WindowFlags _windowFlags;
+};
+
+/**
+@brief Configuration
+
+The created OpenGL context is always double-buffered with 24bit depth buffer.
+@see @ref Sdl2Application(), @ref createContext(), @ref tryCreateContext()
+*/
+class Sdl2Application::Configuration: public WindowConfiguration {
+    public:
+        #ifndef CORRADE_TARGET_EMSCRIPTEN
+        /**
+         * @brief Context flag
+         *
+         * @note Not available in @ref CORRADE_TARGET_EMSCRIPTEN "Emscripten".
+         * @see @ref Flags, @ref setFlags(), @ref Context::Flag
+         * @todo re-enable when Emscripten has proper SDL2 support
+         */
+        enum class Flag: int {
+            Debug = SDL_GL_CONTEXT_DEBUG_FLAG,  /**< Create debug context */
+
+            /** Create context with robust access */
+            RobustAccess = SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG,
+
+            /** Create context with reset isolation */
+            ResetIsolation = SDL_GL_CONTEXT_RESET_ISOLATION_FLAG
+        };
+
+        /**
+         * @brief Context flags
+         *
+         * @note Not available in @ref CORRADE_TARGET_EMSCRIPTEN "Emscripten".
+         * @see @ref setFlags(), @ref Context::Flags
+         */
+        #ifndef DOXYGEN_GENERATING_OUTPUT
+        typedef Containers::EnumSet<Flag, SDL_GL_CONTEXT_DEBUG_FLAG|
+            SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG|SDL_GL_CONTEXT_RESET_ISOLATION_FLAG> Flags;
+        #else
+        typedef Containers::EnumSet<Flag> Flags;
+        #endif
+        #endif
+
+        /*implicit*/ Configuration();
 
         #ifndef CORRADE_TARGET_EMSCRIPTEN
         /**
@@ -941,12 +958,27 @@ class Sdl2Application::Configuration {
         }
         #endif
 
-    private:
-        #if !defined(CORRADE_TARGET_EMSCRIPTEN) && !defined(CORRADE_TARGET_IOS)
-        std::string _title;
+        /* Overloads to remove WTF-factor from method chaining order */
+        #ifndef DOXYGEN_GENERATING_OUTPUT
+        #ifndef CORRADE_TARGET_EMSCRIPTEN
+        Configuration& setTitle(std::string title) {
+            WindowConfiguration::setTitle(std::move(title));
+            return *this;
+        }
+        #else
+        template<class T> Configuration& setTitle(const T&) { return *this; }
         #endif
-        Vector2i _size;
-        WindowFlags _windowFlags;
+        Configuration& setSize(const Vector2i& size) {
+            WindowConfiguration::setSize(size);
+            return *this;
+        }
+        Configuration& setWindowFlags(WindowFlags flags) {
+            WindowConfiguration::setWindowFlags(flags);
+            return *this;
+        }
+        #endif
+
+    private:
         Int _sampleCount;
         #ifndef CORRADE_TARGET_EMSCRIPTEN
         Version _version;
@@ -1649,7 +1681,7 @@ CORRADE_ENUMSET_OPERATORS(Sdl2Application::Flags)
 #ifndef CORRADE_TARGET_EMSCRIPTEN
 CORRADE_ENUMSET_OPERATORS(Sdl2Application::Configuration::Flags)
 #endif
-CORRADE_ENUMSET_OPERATORS(Sdl2Application::Configuration::WindowFlags)
+CORRADE_ENUMSET_OPERATORS(Sdl2Application::WindowConfiguration::WindowFlags)
 CORRADE_ENUMSET_OPERATORS(Sdl2Application::InputEvent::Modifiers)
 CORRADE_ENUMSET_OPERATORS(Sdl2Application::MouseMoveEvent::Buttons)
 

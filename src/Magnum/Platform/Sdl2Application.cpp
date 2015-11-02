@@ -535,7 +535,7 @@ void Sdl2Application::multiGestureEvent(MultiGestureEvent&) {}
 void Sdl2Application::textInputEvent(TextInputEvent&) {}
 void Sdl2Application::textEditingEvent(TextEditingEvent&) {}
 
-Sdl2Application::Configuration::Configuration():
+Sdl2Application::WindowConfiguration::WindowConfiguration():
     #if !defined(CORRADE_TARGET_EMSCRIPTEN) && !defined(CORRADE_TARGET_IOS)
     _title("Magnum SDL2 Application"),
     #endif
@@ -544,13 +544,16 @@ Sdl2Application::Configuration::Configuration():
     #else
     _size{}, /* SDL2 detects someting for us */
     #endif
-    _windowFlags{}, _sampleCount(0)
+    _windowFlags{} {}
+
+Sdl2Application::WindowConfiguration::~WindowConfiguration() = default;
+
+Sdl2Application::Configuration::Configuration():
+    _sampleCount(0)
     #ifndef CORRADE_TARGET_EMSCRIPTEN
     , _version(Version::None), _sRGBCapable{false}
     #endif
     {}
-
-Sdl2Application::Configuration::~Configuration() = default;
 
 std::string Sdl2Application::KeyEvent::keyName(const Key key) {
     return SDL_GetKeyName(SDL_Keycode(key));
