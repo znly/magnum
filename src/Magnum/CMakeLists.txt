@@ -312,6 +312,7 @@ if(WITH_OPENGLTESTER)
     add_library(Magnum::OpenGLTester ALIAS MagnumOpenGLTester)
 endif()
 
+add_subdirectory(Animation)
 add_subdirectory(Math)
 add_subdirectory(Platform)
 add_subdirectory(Trade)
