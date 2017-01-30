@@ -35,15 +35,18 @@ namespace Magnum { namespace Animation {
 
 namespace Implementation {
     template<class> struct TypeTraits;
-    template<class Kind, Kind kind> struct KindTraits;
+    template<class Target, Target> struct TargetTraits;
 }
 
 template<class T> using ResultOf = typename Implementation::TypeTraits<T>::ResultType;
-template<class Kind, Kind kind> using TypeFor = typename Implementation::KindTraits<Kind, kind>::Type;
-template<class Kind, Kind kind> using ResultFor = ResultOf<TypeFor<Kind, kind>>;
+template<class Target, Target target> using TypeFor = typename Implementation::TargetTraits<Target, target>::Type;
+template<class Target, Target target> using ResultFor = ResultOf<TypeFor<Target, target>>;
 
+template<class, class> class Animator;
 template<class> class TrackBase;
 template<class, class, class> class Track;
+template<class, class, class> class TrackView;
+template<class, class> class TrackRef;
 template<class, class> class Clip;
 
 template<class Result> using Interpolator = Result(*)(const TrackBase<Result>&, std::size_t, std::size_t, Float);

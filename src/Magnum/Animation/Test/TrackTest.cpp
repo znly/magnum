@@ -25,7 +25,11 @@
 
 #include <Corrade/TestSuite/Tester.h>
 
+#include "Magnum/Animation/Animator.h" /** @todo remove */
 #include "Magnum/Animation/Track.h"
+#include "Magnum/Math/Color.h"
+#include "Magnum/Math/Quaternion.h"
+#include "Magnum/Trade/Animation.h" /** @todo also */
 
 namespace Magnum { namespace Animation { namespace Test {
 
@@ -67,10 +71,37 @@ TrackTest::TrackTest() {
 
     addInstancedTests({&TrackTest::at}, AtDataCount);
 
-    addInstancedTests({&TrackTest::atSingleKeyframe}, AtSingleKeyframeDataCount);
+//     addInstancedTests({&TrackTest::atSingleKeyframe}, AtSingleKeyframeDataCount);
 }
 
-TrackTest::construct() {
+void TrackTest::construct() {
+
+    Float time{};
+
+
+    Trade::AnimationClip characterFall{{}};
+    Trade::AnimationClip bloodColoring{{}};
+
+    Animation::Animator<Trade::AnimationClip> animator;
+    animator.add(characterFall);
+    animator.add(bloodColoring);
+
+    animator.play(0, time);
+    animator.play(1, time + characterFall.end());
+
+    Color4 color = animator.advance<Trade::AnimationTarget::Color>(time);
+
+    Containers::ArrayView<std::tuple<Vector3, Quaternion, Vector3>> boneTransformations;
+    animator.advanceIndexed<Trade::AnimationTarget::Translation,
+                            Trade::AnimationTarget::Rotation,
+                            Trade::AnimationTarget::Scaling>(time, boneTransformations);
+
+
+
+
+
+
+    static_cast<void>(color);
 }
 
 }}}

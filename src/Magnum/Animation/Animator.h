@@ -36,23 +36,23 @@
 namespace Magnum { namespace Animation {
 
 /**
-@brief Animation value type for given kind
+@brief Animation value type for given target
 
 @see @ref Animator
 @experimental
 */
 #ifndef CORRADE_MSVC2015_COMPATIBILITY /* Multiple definitions still broken */
-template<class Kind, Kind kind> using TypeFor = typename Implementation::KindTraits<Kind, kind>::Type;
+template<class Target, Target target> using TypeFor = typename Implementation::TargetTraits<Target, target>::Type;
 #endif
 
 /**
-@brief Animation result type for given kind
+@brief Animation result type for given target
 
 @see @ref Animator
 @experimental
 */
 #ifndef CORRADE_MSVC2015_COMPATIBILITY /* Multiple definitions still broken */
-template<class Kind, Kind kind> using ResultOf = ResultOf<TypeFor<Kind, kind>>;
+template<class Target, Target target> using ResultFor = ResultOf<TypeFor<Target, target>>;
 #endif
 
 /**
@@ -88,14 +88,20 @@ enum class State: UnsignedShort {
 
 /**
 @brief Animator
+@tparam C
 
 Manages state of various @ref AnimationClip. Tracks referenced by the clips are
 not owned so the user has to ensure that the tracks do not go out of scope for
 the whole lifetime of the animator.
 @experimental
 */
-template<class Kind, class Time, class Frame = Time> class Animator {
+template<class Clip_, class Time_ = typename Clip_::Frame> class Animator {
     public:
+        typedef Clip_ Clip;                     /**< @brief Clip type */
+        typedef typename Clip::Target Target;   /**< @brief Animation target type */
+        typedef typename Clip::Frame Frame;     /**< @brief Frame reference type */
+        typedef Time_ Time;                     /**< @brief Time type */
+
         /**
          * @brief Constructor
          *
@@ -115,7 +121,23 @@ template<class Kind, class Time, class Frame = Time> class Animator {
          * @ref setWeight() functions. The clip indices are sequential,
          * starting from `0`.
          */
-        std::size_t add(const AnimationClip<Kind, Frame>& clip);
+        std::size_t add(const Clip& clip);
+
+        /**
+         * @brief Index count for given targets
+         *
+         * For index count above one it's only possible to use
+         * @ref advanceIndexed() for calculating animation values (and not
+         * @ref advance()).
+         */
+        template<Target ...targets> std::size_t indexCount() const;
+
+        /**
+         * @brief Targets handled by the animator
+         *
+         * @see @ref advance(), @ref advanceIndexed()
+         */
+        Containers::Array<Target> targets() const;
 
         /**
          * @brief Clip state
@@ -185,33 +207,41 @@ template<class Kind, class Time, class Frame = Time> class Animator {
          * (@ref Track::index() being zero for all tracks), use
          * @ref advanceIndexed() otherwise.
          *
-         * Calling this function with kinds t
+         * Calling this function with targets that are not handled by the
+         * animator will return implicitly constructed values. It is not an
+         * error to call this function with just a subset of targets or
+         * multiple times with the same @p time value.
+         * @todo what about decreasing time?
          */
-        template<class ...Kinds> std::tuple<ResultOf<Kind>...> advance(Time time);
+        template<Target first, Target second, Target ...next> std::tuple<ResultFor<Target, first>, ResultFor<Target, second>, ResultFor<Target, next>...> advance(Time time);
+
+        template<Target target> ResultFor<Target, target> advance(Time time);
 
         /**
          * @brief Advance the animation with indexed targets
+         * @param[in]  time     Time to which to advance the animation
+         * @param[out] values   Where to store the interpolated values
          *
+         * Expects that the array size is large enough to store values for all
+         * indexed targets. You can use @ref indexCount() with the same target
+         * list for verifying the size.
          */
-        template<class ...Kinds> void advanceIndexed(Time time, Containers::ArrayView<std::tuple<ResultOf<Kind>...> values);
-#error advance takes a arrayview to tuples, returns void
-#error also a overload for nonindexed that returns by value
-#error the class should be tmpl on clip type
+        template<Target ...target> void advanceIndexed(Time time, Containers::ArrayView<std::tuple<ResultFor<Target, target>...>> values);
 
     private:
         struct Track {
-            AnimationTrackView<Kind, Frame> track;
+            TrackView<Target, Frame> track;
             Time startTime;
+            Float weight;
+            Float speed;
         };
 
         std::vector<Track> _tracks;
         std::vector<std::size_t> _clipMap;
-        std::vector<std::size_t> _kindMap;
-        std::vector<std::pair<Kind, std::size_t>> _kinds;
+        std::vector<std::size_t> _targetMap;
+        std::vector<std::pair<Target, std::size_t>> _targets;
 };
 
-};
-
-}
+}}
 
 #endif

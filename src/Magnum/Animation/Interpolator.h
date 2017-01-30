@@ -1,5 +1,5 @@
-#ifndef Magnum_Animation_Interpolation_h
-#define Magnum_Animation_Interpolation_h
+#ifndef Magnum_Animation_Interpolator_h
+#define Magnum_Animation_Interpolator_h
 /*
     This file is part of Magnum.
 
@@ -29,7 +29,9 @@
  * @brief Typedef @ref Magnum::Animation::Interpolator
  */
 
-#include "Magnum/Animation/Animation.h"
+#include "Magnum/Math/Bezier.h"
+#include "Magnum/Math/Functions.h"
+#include "Magnum/Animation/Track.h"
 
 namespace Magnum { namespace Animation {
 
@@ -44,12 +46,17 @@ interpolates values at @p i and @p j using @p t. Can assume that both @p i and
 template<class Result> using Interpolator = Result(*)(const TrackBase<Result>& track, std::size_t i, std::size_t j, Float t);
 #endif
 
-template<class Kind, class Frame> Vector2 linearInterpolator(const TrackBase<Result>& track, std::size_t i, std::size_t j, Float t) {
-    return Math::lerp(reinterpret_cast<const Track<Kind, Frame>&>(track)[i], reinterpret_cast<const Track<Kind, Frame>&>(track)[j]);
+template<class Target, class Frame, class T> T constantInterpolator(const TrackBase<T>& track, std::size_t i, std::size_t, Float) {
+    return reinterpret_cast<const Track<Target, Frame, T>&>(track)[i];
 }
 
-template<class Kind, class Frame> Vector2 bezierInterpolator(const TrackBase<Result>& track, std::size_t i, std::size_t j, Float t) {
-    return reinterpret_cast<const Track<Kind, Frame>&>(track)[i].interpolate(t);
+template<class Target, class Frame, std::size_t size, class T> Math::Vector<size, T> linearInterpolator(const TrackBase<Math::Vector<size, T>>& track, std::size_t i, std::size_t j, Float t) {
+    return Math::lerp(reinterpret_cast<const Track<Target, Frame, Math::Vector<size, T>>&>(track)[i],
+                      reinterpret_cast<const Track<Target, Frame, Math::Vector<size, T>>&>(track)[j]);
+}
+
+template<class Target, class Frame, UnsignedInt order, UnsignedInt dimensions, class T> Math::Vector<dimensions, T> bezierInterpolator(const TrackBase<Math::Vector<dimensions, T>>& track, std::size_t i, std::size_t, Float t) {
+    return reinterpret_cast<const Track<Target, Frame, Math::Bezier<order, dimensions, T>>&>(track)[i].interpolate(t);
 }
 
 }}

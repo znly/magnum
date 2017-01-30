@@ -31,32 +31,43 @@
 
 #include <Corrade/Containers/Array.h>
 
+#include "Magnum/Magnum.h"
 #include "Magnum/Animation/Animation.h"
 
 namespace Magnum { namespace Animation {
 
 /**
 @brief Animation clip
-@tparam Kind    Animation kind enum type
-@tparam Frame   Frame reference type
+@tparam Target_ Animation target enum type
+@tparam Frame_  Frame reference type
 
-Immutable storage of animation track views of unique kinds. Does not own the
+Immutable storage of animation track views of unique targets. Does not own the
 referenced tracks, so the user has to ensure that the tracks do not go out of
 scope for the whole lifetime of the clip.
 @experimental
 */
-template<class Kind, class Frame> class Clip {
+template<class Target_, class Frame_> class Clip {
     public:
+        typedef Target_ Target;
+        typedef Frame_ Frame;
+
         /**
          * @brief Constructor
          * @param tracks    Tracks contained in this clip
          * @param start     Clip start frame
          * @param end       Clip end frame
          *
-         * Expects that all @p tracks have unique kinds, @p start is not larger
-         * than any keyframe and @p end is not smaller than any keyframe.
+         * Expects that all @p tracks have unique target/index combination,
+         * @p start is not larger than any keyframe and @p end is not smaller
+         * than any keyframe.
          */
-        explicit Clip(Containers::Array<TrackView<Kind, Frame>>&& tracks, Frame start, Frame end) noexcept;
+        explicit Clip(Containers::Array<TrackRef<Target, Frame>>&& tracks, Frame start, Frame end) noexcept: _tracks{std::move(tracks)}, _start{start}, _end{end} {}
+
+        /** @overload
+         * Equivalent to the above with @p start and @p end calculated from the
+         * track contents.
+         */
+        explicit Clip(Containers::Array<TrackRef<Target, Frame>>&& tracks) noexcept;
 
         /**
          * @brief Clip start frame
@@ -77,13 +88,13 @@ template<class Kind, class Frame> class Clip {
         Frame end() const { return _end; }
 
         /** @brief Track list */
-        Containers::ArrayView<const TrackView<Kind, Frame>> tracks() const { return _tracks; }
+        Containers::ArrayView<const TrackRef<Target, Frame>> tracks() const { return _tracks; }
 
     private:
+        Containers::Array<TrackRef<Target, Frame>> _tracks;
         Frame _start, _end;
-        Containers::Array<TrackView<Kind, Frame>> _tracks;
 };
 
-}
+}}
 
 #endif

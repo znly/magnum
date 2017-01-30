@@ -98,55 +98,81 @@ Base for tracks independent on the actual keyframe value stored.
 template<class Result> class TrackBase {};
 
 /**
-@brief Animation track
-@tparam Kind    Animation kind enum type
-@tparam Frame   Frame reference type
+@brief Animation track view
+@tparam Target_ Animation target enum type
+@tparam Frame_  Frame reference type
 @tparam T       Animated value
 
-Immutable storage of keyframe + value pairs.
-@see @ref TrackView, @ref Clip
+View onto keyframe + value pairs. Does not own the keyframe data, see
+@ref Track for an alternative.
+@see @ref Clip
 @experimental
 */
-template<class Kind, class Frame, class T> class Track: public TrackBase<ResultOf<T>> {
+template<class Target_, class Frame_, class T> class TrackView: public TrackBase<ResultOf<T>> {
     public:
+        /** @brief Animation target enum type */
+        typedef Target_ Target;
+
+        /** @brief Frame reference type */
+        typedef Frame_ Frame;
+
+        /** @brief Animated value */
+        typedef T Type;
+
         /** @brief Interpolation function */
         typedef Animation::Interpolator<ResultOf<T>> Interpolator;
 
         /**
          * @brief Constructor
-         * @param kind          Animation kind
+         * @param target        Animation target
          * @param data          Keyframe data
          * @param interpolator  Interpolation function
-         * @param extrapolation Extrapolation behavior
+         * @param before        Extrapolation behavior
+         * @param after         Extrapolation behavior after
          *
          * The keyframe data are assumed to be stored in sorted order. It's not
          * an error to have two successive keyframes with the same frame value.
          */
-        explicit Track(Kind kind, Containers::Array<std::pair<Frame, T>>&& data, Interpolator interpolator, Extrapolation extrapolation = Extrapolation::Constant) noexcept;
+        constexpr explicit TrackView(Target target, std::size_t index, Containers::ArrayView<const std::pair<Frame, T>> data, Interpolator interpolator, Extrapolation before, Extrapolation after) noexcept: _target{target}, _index{index}, _interpolator{interpolator}, _before{before}, _after{after}, _data{data} {}
 
-        /** @brief Copying is not allowed */
-        Track(const Track<Kind, Frame, T>&) = delete;
+        /** @overload
+         * Equivalent to calling @ref TrackView(Target, std::size_t, Containers::ArrayView<const std::pair<Frame, T>>, Interpolator, Extrapolation, Extrapolation)
+         * with both @p before and @p after set to @p extrapolation.
+         */
+        constexpr explicit TrackView(Target target, std::size_t index, Containers::ArrayView<const std::pair<Frame, T>> data, Interpolator interpolator, Extrapolation extrapolation = Extrapolation::Constant) noexcept: Track<Target, Frame, T>{target, index, std::move(data), interpolator, extrapolation, extrapolation} {}
 
-        /** @brief Move constructor */
-        Track(Track<Kind, Frame, T>&&) = default;
+        /** @overload
+         * Equivalent to calling @ref TrackView(Target, std::size_t, Containers::ArrayView<const std::pair<Frame, T>>, Interpolator, Extrapolation, Extrapolation)
+         * with @p index set to `0`.
+         */
+        constexpr explicit TrackView(Target target, Containers::Array<std::pair<Frame, T>>&& data, Interpolator interpolator, Extrapolation before, Extrapolation after) noexcept: Track<Target, Frame, T>{target, 0, std::move(data), interpolator, before, after} {}
 
-        /** @brief Copying is not allowed */
-        Track<Kind, Frame, T>& operator=(const Track<Kind, Frame, T>&) = delete;
+        /** @overload
+         * Equivalent to calling @ref TrackView(Target, std::size_t, Containers::ArrayView<const std::pair<Frame, T>>, Interpolator, Extrapolation, Extrapolation)
+         * with @p index set to `0` and both @p before and @p after set to
+         * @p extrapolation.
+         */
+        constexpr explicit TrackView(Target target, Containers::Array<std::pair<Frame, T>>&& data, Interpolator interpolator, Extrapolation extrapolation = Extrapolation::Constant) noexcept: Track<Target, Frame, T>{target, 0, std::move(data), interpolator, extrapolation, extrapolation} {}
 
-        /** @brief Move constructor */
-        Track<Kind, Frame, T>& operator=(Track<Kind, Frame, T>&&) = default;
+        /** @brief Animation target */
+        Target target() const { return _target; }
 
-        /** @brief Animation kind */
-        Kind kind() const { return _kind; }
-
-#error also an index
+        /** @brief Animation target index */
+        std::size_t index() const { return _index; }
 
         /**
-         * @brief Extrapolation behavior
+         * @brief Extrapolation behavior before first keyframe
          *
-         * @see @ref at(), @ref Clip::start(), @ref Clip::end()
+         * @see @ref after(), @ref at(), @ref Clip::start(), @ref Clip::end()
          */
-        Extrapolation extrapolation() const { return _extrapolation; }
+        Extrapolation before() const { return _before; }
+
+        /**
+         * @brief Extrapolation behavior after last keyframe
+         *
+         * @see @ref before(), @ref at(), @ref Clip::start(), @ref Clip::end()
+         */
+        Extrapolation after() const { return _after; }
 
         /** @brief Interpolation function */
         Interpolator interpolator() const { return _interpolator; }
@@ -174,45 +200,176 @@ template<class Kind, class Frame, class T> class Track: public TrackBase<ResultO
         ResultOf<T> at(Frame frame, std::size_t& hint) const;
 
     private:
-        Kind _kind;
-        Extrapolation _extrapolation;
+        Target _target;
+        std::size_t _index;
+        Extrapolation _before, _after;
+        Interpolator _interpolator;
+        Containers::ArrayView<const std::pair<Frame, T>> _data;
+};
+
+/**
+@brief Animation track
+@tparam Target_ Animation target enum type
+@tparam Frame_  Frame reference type
+@tparam T       Animated value
+
+Immutable storage of keyframe + value pairs.
+@see @ref TrackView, @ref TrackRef, @ref Clip
+@experimental
+*/
+template<class Target_, class Frame_, class T> class Track: public TrackBase<ResultOf<T>> {
+    public:
+        /** @brief Animation target enum type */
+        typedef Target_ Target;
+
+        /** @brief Frame reference type */
+        typedef Frame_ Frame;
+
+        /** @brief Animated value */
+        typedef T Type;
+
+        /** @brief Interpolation function */
+        typedef Animation::Interpolator<ResultOf<T>> Interpolator;
+
+        /**
+         * @brief Constructor
+         * @param target        Animation target
+         * @param data          Keyframe data
+         * @param interpolator  Interpolation function
+         * @param before        Extrapolation behavior
+         * @param after         Extrapolation behavior after
+         *
+         * The keyframe data are assumed to be stored in sorted order. It's not
+         * an error to have two successive keyframes with the same frame value.
+         */
+        explicit Track(Target target, std::size_t index, Containers::Array<std::pair<Frame, T>>&& data, Interpolator interpolator, Extrapolation before, Extrapolation after) noexcept: _target{target}, _index{index}, _interpolator{interpolator}, _before{before}, _after{after}, _data{std::move(data)} {}
+
+        /** @overload
+         * Equivalent to calling @ref Track(Target, std::size_t, Containers::Array<std::pair<Frame, T>>&&, Interpolator, Extrapolation, Extrapolation)
+         * with both @p before and @p after set to @p extrapolation.
+         */
+        explicit Track(Target target, std::size_t index, Containers::Array<std::pair<Frame, T>>&& data, Interpolator interpolator, Extrapolation extrapolation = Extrapolation::Constant) noexcept: Track<Target, Frame, T>{target, index, std::move(data), interpolator, extrapolation, extrapolation} {}
+
+        /** @overload
+         * Equivalent to calling @ref Track(Target, std::size_t, Containers::Array<std::pair<Frame, T>>&&, Interpolator, Extrapolation, Extrapolation)
+         * with @p index set to `0`.
+         */
+        explicit Track(Target target, Containers::Array<std::pair<Frame, T>>&& data, Interpolator interpolator, Extrapolation before, Extrapolation after) noexcept: Track<Target, Frame, T>{target, 0, std::move(data), interpolator, before, after} {}
+
+        /** @overload
+         * Equivalent to calling @ref Track(Target, std::size_t, Containers::Array<std::pair<Frame, T>>&&, Interpolator, Extrapolation, Extrapolation)
+         * with @p index set to `0` and both @p before and @p after set to
+         * @p extrapolation.
+         */
+        explicit Track(Target target, Containers::Array<std::pair<Frame, T>>&& data, Interpolator interpolator, Extrapolation extrapolation = Extrapolation::Constant) noexcept: Track<Target, Frame, T>{target, 0, std::move(data), interpolator, extrapolation, extrapolation} {}
+
+        /** @brief Copying is not allowed */
+        Track(const Track<Target, Frame, T>&) = delete;
+
+        /** @brief Move constructor */
+        Track(Track<Target, Frame, T>&&) = default;
+
+        /** @brief Copying is not allowed */
+        Track<Target, Frame, T>& operator=(const Track<Target, Frame, T>&) = delete;
+
+        /** @brief Move constructor */
+        Track<Target, Frame, T>& operator=(Track<Target, Frame, T>&&) = default;
+
+        /**
+         * @brief Conversion to a view
+         *
+         * @ref TrackView shares the same layout so just reinterpreted `this`
+         * reference is returned.
+         */
+        operator const TrackView<Target, Frame, T>&() const noexcept {
+            return reinterpret_cast<const TrackView<Target, Frame, T>&>(*this);
+        }
+
+        /** @brief Animation target */
+        Target target() const { return _target; }
+
+        /** @brief Animation target index */
+        std::size_t index() const { return _index; }
+
+        /**
+         * @brief Extrapolation behavior before first keyframe
+         *
+         * @see @ref after(), @ref at(), @ref Clip::start(), @ref Clip::end()
+         */
+        Extrapolation before() const { return _before; }
+
+        /**
+         * @brief Extrapolation behavior after last keyframe
+         *
+         * @see @ref before(), @ref at(), @ref Clip::start(), @ref Clip::end()
+         */
+        Extrapolation after() const { return _after; }
+
+        /** @brief Interpolation function */
+        Interpolator interpolator() const { return _interpolator; }
+
+        /** @brief Keyframe data */
+        Containers::ArrayView<const std::pair<Frame, T>> data() const { return _data; }
+
+        /** @brief Keyframe access */
+        const std::pair<Frame, T>& operator[](std::size_t i) const { return _data[i]; }
+
+        /**
+         * @brief Animated value at given time
+         *
+         * See @ref TrackView::at() for more information.
+         */
+        ResultOf<T> at(Frame frame, std::size_t& hint) const {
+            return static_cast<const TrackView<Target, Frame, T>&>(*this).at(frame, hint);
+        }
+
+    private:
+        Target _target;
+        std::size_t _index;
+        Extrapolation _before, _after;
         Interpolator _interpolator;
         Containers::Array<std::pair<Frame, T>> _data;
 };
 
 /**
-@brief Animation track view
-@tparam Kind    Animation kind enum type
-@tparam Frame   Frame reference type
+@brief Animation track reference
+@tparam Target_ Animation target enum type
+@tparam Frame_  Frame reference type
 
-Copyable type-erased view onto an animation track. Does not own the viewed
-track, so the user has to ensure the track does not go out of scope for the
-whole view lifetime.
-@see @ref
+Copyable type-erased reference to an animation track.
+@see @ref Animator
 @experimental
 */
-template<class Kind, class Frame> class TrackView {
+template<class Target_, class Frame_> class TrackRef {
     public:
+        /** @brief Animation target enum type */
+        typedef Target_ Target;
+
+        /** @brief Frame reference type */
+        typedef Frame_ Frame;
+
         /**
          * @brief Constructors
          *
-         * Creates view onto the full track.
+         * Creates reference onto given track. Does not own the referenced
+         * track, so the user has to ensure the track does not go out of scope
+         * for the whole reference lifetime.
          */
-        template<class T> /*implicit*/ TrackView(const Track<Kind, Frame, T>& track) noexcept: _kind{track.kind()}, _track{&track} {}
+        template<class T> /*implicit*/ TrackRef(const TrackView<Target, Frame, T>& track) noexcept: _target{track.target()}, _index{track.index()}, _track{&track} {}
 
-        /** @brief Animation kind */
-        Kind kind() const { return _kind; }
+        /** @brief Animation target */
+        Target target() const { return _target; }
 
         /**
          * @brief Value at given time
          *
-         * Calls @ref Track::at() on the referenced track.
-         * @todo make slicing possible here
+         * Calls @ref TrackView::at() on the referenced track.
          */
         template<class T> ResultOf<T> at(Frame frame, std::size_t& hint) const;
 
     private:
-        Kind _kind;
+        Target _target;
+        std::size_t _index;
         void* _track;
 };
 
