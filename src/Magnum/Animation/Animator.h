@@ -88,7 +88,8 @@ enum class State: UnsignedShort {
 
 /**
 @brief Animator
-@tparam C
+@tparam Clip_   Clip type
+@tparam Time_   Time type
 
 Manages state of various @ref AnimationClip. Tracks referenced by the clips are
 not owned so the user has to ensure that the tracks do not go out of scope for
@@ -230,7 +231,7 @@ template<class Clip_, class Time_ = typename Clip_::Frame> class Animator {
 
     private:
         struct Track {
-            TrackView<Target, Frame> track;
+            TrackRef<Target, Frame> track;
             Time startTime;
             Float weight;
             Float speed;

@@ -43,20 +43,20 @@ interpolates values at @p i and @p j using @p t. Can assume that both @p i and
 @p j are in bounds and immediately next to each other.
 */
 #ifndef CORRADE_MSVC2015_COMPATIBILITY /* Multiple definitions still broken */
-template<class Result> using Interpolator = Result(*)(const TrackBase<Result>& track, std::size_t i, std::size_t j, Float t);
+// template<class Result> using Interpolator = Result(*)(const TrackBase<Result>& track, std::size_t i, std::size_t j, Float t);
 #endif
 
 template<class Target, class Frame, class T> T constantInterpolator(const TrackBase<T>& track, std::size_t i, std::size_t, Float) {
-    return reinterpret_cast<const Track<Target, Frame, T>&>(track)[i];
+    return reinterpret_cast<const Track<Target, Frame, T>&>(track)[i].second;
 }
 
-template<class Target, class Frame, std::size_t size, class T> Math::Vector<size, T> linearInterpolator(const TrackBase<Math::Vector<size, T>>& track, std::size_t i, std::size_t j, Float t) {
-    return Math::lerp(reinterpret_cast<const Track<Target, Frame, Math::Vector<size, T>>&>(track)[i],
-                      reinterpret_cast<const Track<Target, Frame, Math::Vector<size, T>>&>(track)[j]);
+template<class Target, class Frame, class T> T linearInterpolator(const TrackBase<T>& track, std::size_t i, std::size_t j, Float t) {
+    return Math::lerp(reinterpret_cast<const Track<Target, Frame, T>&>(track)[i].second,
+                      reinterpret_cast<const Track<Target, Frame, T>&>(track)[j].second, t);
 }
 
 template<class Target, class Frame, UnsignedInt order, UnsignedInt dimensions, class T> Math::Vector<dimensions, T> bezierInterpolator(const TrackBase<Math::Vector<dimensions, T>>& track, std::size_t i, std::size_t, Float t) {
-    return reinterpret_cast<const Track<Target, Frame, Math::Bezier<order, dimensions, T>>&>(track)[i].interpolate(t);
+    return reinterpret_cast<const Track<Target, Frame, Math::Bezier<order, dimensions, T>>&>(track)[i].second.interpolate(t);
 }
 
 }}

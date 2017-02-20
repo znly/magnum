@@ -53,6 +53,8 @@ set(Magnum_SRCS
     Timeline.cpp
     Version.cpp
 
+    Animation/Track.cpp
+
     Implementation/BufferState.cpp
     Implementation/FramebufferState.cpp
     Implementation/MeshState.cpp

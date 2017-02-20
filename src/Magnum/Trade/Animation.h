@@ -60,6 +60,7 @@ enum class AnimationTarget: UnsignedShort {
 };
 
 typedef Animation::Clip<Trade::AnimationTarget, Float> AnimationClip;
+template<class T> using AnimationTrack = Animation::Track<Trade::AnimationTarget, Float, T>;
 
 }
 

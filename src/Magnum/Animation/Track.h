@@ -32,6 +32,7 @@
 #include <Corrade/Containers/Array.h>
 
 #include "Magnum/Magnum.h"
+#include "Magnum/visibility.h"
 #include "Magnum/Animation/Animation.h"
 
 namespace Magnum { namespace Animation {
@@ -89,6 +90,9 @@ enum class Extrapolation: UnsignedShort {
     /** @todo repeat? that would duplicate the play count feature though */
 };
 
+/** @debugoperatorenum{Extrapolation} */
+MAGNUM_EXPORT Debug& operator<<(Debug& debug, Extrapolation value);
+
 /**
 @brief Base for animation tracks
 @tparam Result  Result type of interpolated animation value
@@ -139,20 +143,20 @@ template<class Target_, class Frame_, class T> class TrackView: public TrackBase
          * Equivalent to calling @ref TrackView(Target, std::size_t, Containers::ArrayView<const std::pair<Frame, T>>, Interpolator, Extrapolation, Extrapolation)
          * with both @p before and @p after set to @p extrapolation.
          */
-        constexpr explicit TrackView(Target target, std::size_t index, Containers::ArrayView<const std::pair<Frame, T>> data, Interpolator interpolator, Extrapolation extrapolation = Extrapolation::Constant) noexcept: Track<Target, Frame, T>{target, index, std::move(data), interpolator, extrapolation, extrapolation} {}
+        constexpr explicit TrackView(Target target, std::size_t index, Containers::ArrayView<const std::pair<Frame, T>> data, Interpolator interpolator, Extrapolation extrapolation = Extrapolation::Constant) noexcept: TrackView<Target, Frame, T>{target, index, std::move(data), interpolator, extrapolation, extrapolation} {}
 
         /** @overload
          * Equivalent to calling @ref TrackView(Target, std::size_t, Containers::ArrayView<const std::pair<Frame, T>>, Interpolator, Extrapolation, Extrapolation)
          * with @p index set to `0`.
          */
-        constexpr explicit TrackView(Target target, Containers::Array<std::pair<Frame, T>>&& data, Interpolator interpolator, Extrapolation before, Extrapolation after) noexcept: Track<Target, Frame, T>{target, 0, std::move(data), interpolator, before, after} {}
+        constexpr explicit TrackView(Target target, Containers::ArrayView<const std::pair<Frame, T>> data, Interpolator interpolator, Extrapolation before, Extrapolation after) noexcept: TrackView<Target, Frame, T>{target, 0, std::move(data), interpolator, before, after} {}
 
         /** @overload
          * Equivalent to calling @ref TrackView(Target, std::size_t, Containers::ArrayView<const std::pair<Frame, T>>, Interpolator, Extrapolation, Extrapolation)
          * with @p index set to `0` and both @p before and @p after set to
          * @p extrapolation.
          */
-        constexpr explicit TrackView(Target target, Containers::Array<std::pair<Frame, T>>&& data, Interpolator interpolator, Extrapolation extrapolation = Extrapolation::Constant) noexcept: Track<Target, Frame, T>{target, 0, std::move(data), interpolator, extrapolation, extrapolation} {}
+        constexpr explicit TrackView(Target target, Containers::ArrayView<const std::pair<Frame, T>> data, Interpolator interpolator, Extrapolation extrapolation = Extrapolation::Constant) noexcept: TrackView<Target, Frame, T>{target, 0, std::move(data), interpolator, extrapolation, extrapolation} {}
 
         /** @brief Animation target */
         Target target() const { return _target; }
@@ -202,8 +206,8 @@ template<class Target_, class Frame_, class T> class TrackView: public TrackBase
     private:
         Target _target;
         std::size_t _index;
-        Extrapolation _before, _after;
         Interpolator _interpolator;
+        Extrapolation _before, _after;
         Containers::ArrayView<const std::pair<Frame, T>> _data;
 };
 
@@ -244,11 +248,17 @@ template<class Target_, class Frame_, class T> class Track: public TrackBase<Res
          */
         explicit Track(Target target, std::size_t index, Containers::Array<std::pair<Frame, T>>&& data, Interpolator interpolator, Extrapolation before, Extrapolation after) noexcept: _target{target}, _index{index}, _interpolator{interpolator}, _before{before}, _after{after}, _data{std::move(data)} {}
 
+        /** @overload */
+        explicit Track(Target target, std::size_t index, std::initializer_list<std::pair<Frame, T>> data, Interpolator interpolator, Extrapolation before, Extrapolation after): Track{target, index, Containers::Array<std::pair<Frame, T>>{Containers::InPlaceInit, data}, interpolator, before, after} {}
+
         /** @overload
          * Equivalent to calling @ref Track(Target, std::size_t, Containers::Array<std::pair<Frame, T>>&&, Interpolator, Extrapolation, Extrapolation)
          * with both @p before and @p after set to @p extrapolation.
          */
         explicit Track(Target target, std::size_t index, Containers::Array<std::pair<Frame, T>>&& data, Interpolator interpolator, Extrapolation extrapolation = Extrapolation::Constant) noexcept: Track<Target, Frame, T>{target, index, std::move(data), interpolator, extrapolation, extrapolation} {}
+
+        /** @overload */
+        explicit Track(Target target, std::size_t index, std::initializer_list<std::pair<Frame, T>> data, Interpolator interpolator, Extrapolation extrapolation = Extrapolation::Constant): Track{target, index, Containers::Array<std::pair<Frame, T>>{Containers::InPlaceInit, data}, interpolator, extrapolation} {}
 
         /** @overload
          * Equivalent to calling @ref Track(Target, std::size_t, Containers::Array<std::pair<Frame, T>>&&, Interpolator, Extrapolation, Extrapolation)
@@ -256,12 +266,18 @@ template<class Target_, class Frame_, class T> class Track: public TrackBase<Res
          */
         explicit Track(Target target, Containers::Array<std::pair<Frame, T>>&& data, Interpolator interpolator, Extrapolation before, Extrapolation after) noexcept: Track<Target, Frame, T>{target, 0, std::move(data), interpolator, before, after} {}
 
+        /** @overload */
+        explicit Track(Target target, std::initializer_list<std::pair<Frame, T>> data, Interpolator interpolator, Extrapolation before, Extrapolation after): Track{target, Containers::Array<std::pair<Frame, T>>{Containers::InPlaceInit, data}, interpolator, before, after} {}
+
         /** @overload
          * Equivalent to calling @ref Track(Target, std::size_t, Containers::Array<std::pair<Frame, T>>&&, Interpolator, Extrapolation, Extrapolation)
          * with @p index set to `0` and both @p before and @p after set to
          * @p extrapolation.
          */
         explicit Track(Target target, Containers::Array<std::pair<Frame, T>>&& data, Interpolator interpolator, Extrapolation extrapolation = Extrapolation::Constant) noexcept: Track<Target, Frame, T>{target, 0, std::move(data), interpolator, extrapolation, extrapolation} {}
+
+        /** @overload */
+        explicit Track(Target target, std::initializer_list<std::pair<Frame, T>> data, Interpolator interpolator, Extrapolation extrapolation = Extrapolation::Constant): Track{target, Containers::Array<std::pair<Frame, T>>{Containers::InPlaceInit, data}, interpolator, extrapolation} {}
 
         /** @brief Copying is not allowed */
         Track(const Track<Target, Frame, T>&) = delete;
@@ -291,6 +307,9 @@ template<class Target_, class Frame_, class T> class Track: public TrackBase<Res
         /** @brief Animation target index */
         std::size_t index() const { return _index; }
 
+        /** @brief Interpolation function */
+        Interpolator interpolator() const { return _interpolator; }
+
         /**
          * @brief Extrapolation behavior before first keyframe
          *
@@ -304,9 +323,6 @@ template<class Target_, class Frame_, class T> class Track: public TrackBase<Res
          * @see @ref before(), @ref at(), @ref Clip::start(), @ref Clip::end()
          */
         Extrapolation after() const { return _after; }
-
-        /** @brief Interpolation function */
-        Interpolator interpolator() const { return _interpolator; }
 
         /** @brief Keyframe data */
         Containers::ArrayView<const std::pair<Frame, T>> data() const { return _data; }
@@ -326,8 +342,8 @@ template<class Target_, class Frame_, class T> class Track: public TrackBase<Res
     private:
         Target _target;
         std::size_t _index;
-        Extrapolation _before, _after;
         Interpolator _interpolator;
+        Extrapolation _before, _after;
         Containers::Array<std::pair<Frame, T>> _data;
 };
 
@@ -349,13 +365,16 @@ template<class Target_, class Frame_> class TrackRef {
         typedef Frame_ Frame;
 
         /**
-         * @brief Constructors
+         * @brief Constructor
          *
          * Creates reference onto given track. Does not own the referenced
          * track, so the user has to ensure the track does not go out of scope
          * for the whole reference lifetime.
          */
         template<class T> /*implicit*/ TrackRef(const TrackView<Target, Frame, T>& track) noexcept: _target{track.target()}, _index{track.index()}, _track{&track} {}
+
+        /** @overload  */
+        template<class T> /*implicit*/ TrackRef(const Track<Target, Frame, T>& track) noexcept: _target{track.target()}, _index{track.index()}, _track{&track} {}
 
         /** @brief Animation target */
         Target target() const { return _target; }
@@ -370,8 +389,12 @@ template<class Target_, class Frame_> class TrackRef {
     private:
         Target _target;
         std::size_t _index;
-        void* _track;
+        const void* _track;
 };
+
+template<class Target_, class Frame_, class T> ResultOf<T> TrackView<Target_, Frame_, T>::at(Frame frame, std::size_t& hint) const {
+    return {};
+}
 
 }}
 

@@ -63,11 +63,17 @@ template<class Target_, class Frame_> class Clip {
          */
         explicit Clip(Containers::Array<TrackRef<Target, Frame>>&& tracks, Frame start, Frame end) noexcept: _tracks{std::move(tracks)}, _start{start}, _end{end} {}
 
+        /** @overload */
+        explicit Clip(std::initializer_list<TrackRef<Target, Frame>> tracks, Frame start, Frame end): Clip{Containers::Array<TrackRef<Target, Frame>>{Containers::InPlaceInit, tracks}, start, end} {}
+
         /** @overload
-         * Equivalent to the above with @p start and @p end calculated from the
-         * track contents.
+         * Equivalent @ref Clip(Containers::Array<TrackRef<Target, Frame>>&&, Frame, Frame)
+         * with @p start and @p end calculated from the track contents.
          */
         explicit Clip(Containers::Array<TrackRef<Target, Frame>>&& tracks) noexcept;
+
+        /** @overload */
+        explicit Clip(std::initializer_list<TrackRef<Target, Frame>> tracks): Clip{Containers::Array<TrackRef<Target, Frame>>{Containers::InPlaceInit, tracks}} {}
 
         /**
          * @brief Clip start frame
