@@ -1,6 +1,9 @@
 #!/bin/bash
 set -ev
 
+# Start Xvfb for GL tests
+/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 640x480x24 -ac +extension GLX +render
+
 # Corrade
 git clone --depth 1 git://github.com/mosra/corrade.git
 cd corrade
@@ -43,3 +46,5 @@ cmake .. \
 # Otherwise the job gets killed (probably because using too much memory)
 make -j4
 ASAN_OPTIONS="color=always" LSAN_OPTIONS="color=always suppressions=$TRAVIS_BUILD_DIR/package/ci/leaksanitizer.conf" CORRADE_TEST_COLOR=ON ctest -V -E GLTest
+
+./src/Magnum/Platform/magnum-info
