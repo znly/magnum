@@ -12,8 +12,8 @@ addons:
     - libxcursor-dev
     #- libxi-dev
     - mesa-utils
-    - libgl1-mesa-swx11
-    - libgl1-mesa-swx11-dev
+    #- libgl1-mesa-swx11
+    #- libgl1-mesa-swx11-dev
     - xvfb
 
 matrix:
