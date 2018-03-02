@@ -166,6 +166,7 @@ Lastly, a few utility executables are available:
 -   `fontconverter` --- @ref magnum-fontconverter executable
 -   `imageconverter` --- @ref magnum-imageconverter executable
 -   `gl-info` --- @ref magnum-gl-info executable
+-   `vk-info` --- @ref magnum-vk-info executable
 -   `al-info` --- @ref magnum-al-info executable
 
 Note that [each namespace](namespaces.html), all @ref Platform libraries and

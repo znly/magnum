@@ -69,6 +69,17 @@ install(FILES ${MagnumVk_HEADERS} DESTINATION ${MAGNUM_INCLUDE_INSTALL_DIR}/Vk)
 # Magnum Vk library target alias for superprojects
 add_library(Magnum::Vk ALIAS MagnumVk)
 
+if(WITH_VK_INFO)
+    add_executable(magnum-vk-info vk-info.cpp)
+    target_link_libraries(magnum-vk-info PRIVATE MagnumVk)
+    set_target_properties(magnum-vk-info PROPERTIES FOLDER "Magnum/Vk")
+
+    install(TARGETS magnum-vk-info DESTINATION ${MAGNUM_BINARY_INSTALL_DIR})
+
+    # Magnum Vk Info target alias for superprojects
+    add_executable(Magnum::vk-info ALIAS magnum-vk-info)
+endif()
+
 if(BUILD_TESTS)
     add_subdirectory(Test)
 endif()

@@ -86,6 +86,7 @@
 #  fontconverter                - magnum-fontconverter executable
 #  imageconverter               - magnum-imageconverter executable
 #  gl-info                      - magnum-gl-info executable
+#  vk-info                      - magnum-vk-info executable
 #  al-info                      - magnum-al-info executable
 #
 # Example usage with specifying additional components is::
@@ -346,7 +347,8 @@ set(_MAGNUM_PLUGIN_COMPONENT_LIST
     MagnumFont MagnumFontConverter ObjImporter TgaImageConverter TgaImporter
     WavAudioImporter)
 set(_MAGNUM_EXECUTABLE_COMPONENT_LIST
-    distancefieldconverter fontconverter imageconverter gl-info al-info)
+    distancefieldconverter fontconverter imageconverter gl-info vk-info
+    al-info)
 
 # Inter-component dependencies
 set(_MAGNUM_Audio_DEPENDENCIES )
