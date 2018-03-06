@@ -50,7 +50,9 @@ add_library(MagnumVk ${SHARED_OR_STATIC}
     $<TARGET_OBJECTS:MagnumFlextVkObjects>)
 set_target_properties(MagnumVk PROPERTIES
     DEBUG_POSTFIX "-d"
-    FOLDER "Magnum/Vk")
+    FOLDER "Magnum/Vk"
+    CORRADE_CXX_STANDARD 14
+    INTERFACE_CORRADE_CXX_STANDARD 14)
 if(NOT BUILD_STATIC)
     target_compile_definitions(MagnumVk PRIVATE "FlextVk_EXPORTS")
     set_target_properties(MagnumVk PROPERTIES VERSION ${MAGNUM_LIBRARY_VERSION} SOVERSION ${MAGNUM_LIBRARY_SOVERSION})

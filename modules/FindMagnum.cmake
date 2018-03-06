@@ -746,6 +746,8 @@ foreach(_component ${Magnum_FIND_COMPONENTS})
             find_package(Vulkan REQUIRED)
             set_property(TARGET Magnum::${_component} APPEND PROPERTY
                 INTERFACE_LINK_LIBRARIES Vulkan::Vulkan)
+            set_property(TARGET Magnum::${_component} PROPERTY
+                INTERFACE_CORRADE_CXX_STANDARD 14)
         endif()
 
         # No special setup for AnyAudioImporter plugin
