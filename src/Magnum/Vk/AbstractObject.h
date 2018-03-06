@@ -1,5 +1,5 @@
-#ifndef Magnum_Vk_Vk_h
-#define Magnum_Vk_Vk_h
+#ifndef Magnum_Vk_Vulkan_h
+#define Magnum_Vk_Vulkan_h
 /*
     This file is part of Magnum.
 
@@ -26,14 +26,45 @@
 */
 
 /** @file
- * @brief Forward declarations for the @ref Magnum::Vk namespace
+ * @brief Enum @ref Magnum::Vk::ObjectFlag, enum set @ref Magnum::Vk::ObjectFlags, macro @ref MAGNUM_VK_ASSERT_OUTPUT()
  */
+
+#include <Corrade/Containers/EnumSet.h>
+#include <Corrade/Utility/Assert.h>
+
+#include "Magnum/Magnum.h"
+#include "MagnumExternal/Vulkan/flextVk.h"
 
 namespace Magnum { namespace Vk {
 
-#ifndef DOXYGEN_GENERATING_OUTPUT
-class Instance;
-#endif
+/**
+@brief Assert that a Vulkan function call doesn't fail
+
+Equivalent to
+
+@code{.cpp}
+CORRADE_INTERNAL_ASSERT(call == VK_SUCCESS)
+@endcode
+*/
+#define MAGNUM_VK_ASSERT_OUTPUT(call) \
+    CORRADE_INTERNAL_ASSERT(call == VK_SUCCESS)
+
+/**
+@brief Object wrapping flag
+
+@see @ref ObjectFlags, @ref Instance::wrap()
+*/
+enum class ObjectFlag: UnsignedByte {
+    /** Delete the object on destruction. */
+    DeleteOnDestruction = 1 << 0
+};
+
+/**
+@brief Object wrapping flags
+
+@see @ref Instance::wrap()
+*/
+typedef Containers::EnumSet<ObjectFlag> ObjectFlags;
 
 }}
 

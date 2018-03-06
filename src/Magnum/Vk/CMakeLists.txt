@@ -31,8 +31,12 @@ cmake_minimum_required(VERSION 3.7)
 set(Vulkan_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/src/MagnumExternal/Vulkan)
 find_package(Vulkan REQUIRED)
 
-set(MagnumVk_SRCS )
+set(MagnumVk_SRCS
+    Instance.cpp)
 set(MagnumVk_HEADERS
+    AbstractObject.h
+    Instance.h
+    Tags.h
     Vk.h
 
     visibility.h)

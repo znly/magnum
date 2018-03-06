@@ -1,5 +1,3 @@
-#ifndef Magnum_Vk_Vk_h
-#define Magnum_Vk_Vk_h
 /*
     This file is part of Magnum.
 
@@ -25,16 +23,25 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-/** @file
- * @brief Forward declarations for the @ref Magnum::Vk namespace
- */
+#include <Corrade/Containers/ArrayView.h>
 
-namespace Magnum { namespace Vk {
+#include "Magnum/Magnum.h"
+#include "MagnumExternal/Vulkan/flextVk.h"
 
-#ifndef DOXYGEN_GENERATING_OUTPUT
-class Instance;
-#endif
+VkInstance instance;
 
-}}
+using namespace Magnum;
 
-#endif
+/* [global-instance-function-pointers] */
+#include <MagnumExternal/Vulkan/flextVkGlobal.h>
+
+int main() {
+    // ...
+
+    VkPhysicalDevice devices[10];
+    UnsignedInt count = Containers::arraySize(devices);
+    vkEnumeratePhysicalDevices(instance, &count, devices);
+
+    // ...
+}
+/* [global-instance-function-pointers] */

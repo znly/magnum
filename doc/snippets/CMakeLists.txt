@@ -62,6 +62,13 @@ if(WITH_TRADE)
     set_target_properties(snippets-MagnumTrade PROPERTIES FOLDER "Magnum/doc/snippets")
 endif()
 
+if(WITH_VK)
+    add_library(snippets-MagnumVk STATIC
+        MagnumVk-instance.cpp)
+    target_link_libraries(snippets-MagnumVk PRIVATE MagnumVk)
+    set_target_properties(snippets-MagnumVk PROPERTIES FOLDER "Magnum/doc/snippets")
+endif()
+
 find_package(Corrade COMPONENTS TestSuite)
 
 if(WITH_DEBUGTOOLS)

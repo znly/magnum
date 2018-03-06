@@ -1,5 +1,5 @@
-#ifndef Magnum_Vk_Vk_h
-#define Magnum_Vk_Vk_h
+#ifndef Magnum_Vk_Tags_h
+#define Magnum_Vk_Tags_h
 /*
     This file is part of Magnum.
 
@@ -26,15 +26,55 @@
 */
 
 /** @file
- * @brief Forward declarations for the @ref Magnum::Vk namespace
+ * @brief Tag type @ref Magnum::Vk::NoInitT, @ref Magnum::Vk::NoCreateT, tag @ref Magnum::Vk::NoInit, @ref Magnum::Vk::NoCreateT
  */
+
+#include <Corrade/Containers/Tags.h>
 
 namespace Magnum { namespace Vk {
 
-#ifndef DOXYGEN_GENERATING_OUTPUT
-class Instance;
+/**
+@brief No initialization tag type
+
+Used to distinguish construction with no initialization at all.
+@see @ref NoInit
+*/
+typedef Corrade::Containers::NoInitT NoInitT;
+
+/**
+@brief No creation tag type
+
+Used to distinguish construction without creating the underlying Vulkan object.
+@see @ref NoCreate
+*/
+/* Explicit constructor to avoid ambiguous calls when using {} */
+struct NoCreateT {
+    #ifndef DOXYGEN_GENERATING_OUTPUT
+    struct Init{};
+    constexpr explicit NoCreateT(Init) {}
+    #endif
+};
+
+/**
+@brief No initialization tag
+
+Use for construction with no initialization at all.
+*/
+#ifdef DOXYGEN_GENERATING_OUTPUT
+/* Explicit constructor to avoid ambiguous calls when using {} */
+constexpr NoInitT NoInit{};
+#else
+using Corrade::Containers::NoInit;
 #endif
+
+/**
+@brief No creation tag
+
+Use for construction without creating the underlying Vulkan object.
+*/
+constexpr NoCreateT NoCreate{NoCreateT::Init{}};
 
 }}
 
 #endif
+

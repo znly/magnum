@@ -1,5 +1,3 @@
-#ifndef Magnum_Vk_Vk_h
-#define Magnum_Vk_Vk_h
 /*
     This file is part of Magnum.
 
@@ -25,16 +23,53 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-/** @file
- * @brief Forward declarations for the @ref Magnum::Vk namespace
- */
+#include "Instance.h"
+
+#include "MagnumExternal/Vulkan/flextVkGlobal.h"
 
 namespace Magnum { namespace Vk {
 
-#ifndef DOXYGEN_GENERATING_OUTPUT
-class Instance;
-#endif
+InstanceCreateInfo::InstanceCreateInfo(): _info{} {
+    _info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+}
+
+InstanceCreateInfo::InstanceCreateInfo(NoInitT) {}
+
+InstanceCreateInfo::~InstanceCreateInfo() {}
+
+Instance Instance::wrap(VkInstance handle, ObjectFlags flags) {
+    Instance out{NoCreate};
+    out._handle = handle;
+    out._flags = flags;
+
+    /* Init the function pointers */
+    flextVkInitInstance(_handle, &out._functionPointers);
+
+    return out;
+}
+
+Instance::Instance(const InstanceCreateInfo& info): _flags{ObjectFlag::DeleteOnDestruction} {
+    MAGNUM_VK_ASSERT_OUTPUT(vkCreateInstance(&info.info(), nullptr, &_handle));
+
+    /* Init the functions */
+    flextVkInitInstance(_handle, &_functionPointers);
+}
+
+Instance::Instance(NoCreateT): _handle{}, _functionPointers{} {}
+
+Instance::~Instance() {
+    if(_handle && !(_flags & ObjectFlag::DeleteOnDestruction))
+        _functionPointers.DestroyInstance(_handle, nullptr);
+}
+
+VkInstance Instance::release() {
+    const VkInstance handle = _handle;
+    _handle = nullptr;
+    return handle;
+}
+
+void Instance::populateGlobalFunctionPointers() {
+    flextVkInstance = _functionPointers;
+}
 
 }}
-
-#endif

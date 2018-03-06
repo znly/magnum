@@ -25,7 +25,7 @@
     DEALINGS IN THE SOFTWARE.
 */
 
-#include "MagnumExternal/Vulkan/flextGL.h"
+#include "MagnumExternal/Vulkan/flextVk.h"
 
 #ifdef __cplusplus
 extern "C" {
