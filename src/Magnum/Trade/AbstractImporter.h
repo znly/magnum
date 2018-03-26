@@ -67,9 +67,9 @@ import.
 You don't need to do most of the redundant sanity checks, these things are
 checked by the implementation:
 
--   The @ref doOpenData(), @ref doOpenFile() and @ref doOpenState() functions
-    are called after the previous file was closed, function @ref doClose() is
-    called only if there is any file opened.
+-   The @ref doOpenData(), @ref doOpenMemory(), @ref doOpenFile() and
+    @ref doOpenState() functions are called after the previous file was closed,
+    function @ref doClose() is called only if there is any file opened.
 -   The @ref doOpenData() function is called only if @ref Feature::OpenData is
     supported.
 -   The @ref doOpenState() function is called only if @ref Feature::OpenState
@@ -97,8 +97,11 @@ class MAGNUM_EXPORT AbstractImporter: public PluginManager::AbstractManagingPlug
             /** Opening files from raw data using @ref openData() */
             OpenData = 1 << 0,
 
+            /** Opening raw memory using @ref openMemory() */
+            OpenMemory = 1 << 1,
+
             /** Opening already loaded state using @ref openState() */
-            OpenState = 1 << 1
+            OpenState = 1 << 2
         };
 
         /** @brief Set of features supported by this importer */
@@ -143,12 +146,38 @@ class MAGNUM_EXPORT AbstractImporter: public PluginManager::AbstractManagingPlug
         /**
          * @brief Open raw data
          *
-         * Closes previous file, if it was opened, and tries to open given
-         * file. Available only if @ref Feature::OpenData is supported. Returns
-         * @cpp true @ce on success, @cpp false @ce otherwise.
+         * Closes previous file, if it was opened, and tries to open @p data.
+         * When using this function, the importer can't make any assumptions
+         * about lifetime of the @p data array and it *may* make a local copy
+         * of it. See @ref openMemory() for an alternative.
+         *
+         * Expects that @ref Feature::OpenData is supported. If
+         * @ref Feature::OpenData is not supported but @ref Feature::OpenMemory
+         * is supported instead, makes a local copy of @p data and passes them
+         * through to @ref openMemory().
+         *
+         * Returns @cpp true @ce on success, @cpp false @ce otherwise.
          * @see @ref features(), @ref openFile()
          */
         bool openData(Containers::ArrayView<const char> data);
+
+        /**
+         * @brief Open raw memory
+         *
+         * Closes previous file, if it was opened, and tries to open @p memory.
+         * Unlike @ref openData() this doesn't make a local copy of @p data,
+         * expecting that it will stay in scope for the whole lifetime of the
+         * plugin.
+         *
+         * Expects that @ref Feature::OpenMemory is supported. If
+         * @ref Feature::OpenMemory is not supported but @ref Feature::OpenData
+         * is supported instead, @p memory is passed through to
+         * @ref openData().
+         *
+         * Returns @cpp true @ce on success, @cpp false @ce otherwise.
+         * @see @ref features(), @ref openFile()
+         */
+        bool openMemory(Containers::ArrayView<const char> memory);
 
         /**
          * @brief Open already loaded state
