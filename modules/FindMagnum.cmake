@@ -592,6 +592,11 @@ foreach(_component ${Magnum_FIND_COMPONENTS})
                 find_package(GLFW)
                 set_property(TARGET Magnum::${_component} APPEND PROPERTY
                     INTERFACE_LINK_LIBRARIES GLFW::GLFW)
+                if(CORRADE_TARGET_UNIX AND NOT CORRADE_TARGET_APPLE)
+                    # Needed for opt-in DPI queries
+                    set_property(TARGET Magnum::${_component} APPEND PROPERTY
+                        INTERFACE_LINK_LIBRARIES ${CMAKE_DL_LIBS})
+                endif()
 
             # GLUT application dependencies
             elseif(_component STREQUAL GlutApplication)
@@ -606,6 +611,11 @@ foreach(_component ${Magnum_FIND_COMPONENTS})
                 find_package(SDL2)
                 set_property(TARGET Magnum::${_component} APPEND PROPERTY
                     INTERFACE_LINK_LIBRARIES SDL2::SDL2)
+                if(CORRADE_TARGET_UNIX AND NOT CORRADE_TARGET_APPLE)
+                    # Needed for opt-in DPI queries
+                    set_property(TARGET Magnum::${_component} APPEND PROPERTY
+                        INTERFACE_LINK_LIBRARIES ${CMAKE_DL_LIBS})
+                endif()
 
             # (Windowless) GLX application dependencies
             elseif(_component STREQUAL GlxApplication OR _component STREQUAL WindowlessGlxApplication)
