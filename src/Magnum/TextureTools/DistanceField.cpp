@@ -75,7 +75,7 @@ class DistanceFieldShader: public GL::AbstractShaderProgram {
         }
 
     private:
-        enum: Int { TextureUnit = 8 };
+        enum: Int { TextureUnit = 7 };
 
         Int radiusUniform{0},
             scalingUniform{1},

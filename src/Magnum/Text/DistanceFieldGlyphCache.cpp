@@ -40,9 +40,13 @@ DistanceFieldGlyphCache::DistanceFieldGlyphCache(const Vector2i& originalSize, c
     #if !(defined(MAGNUM_TARGET_GLES) && defined(MAGNUM_TARGET_GLES2))
     GlyphCache(GL::TextureFormat::R8, originalSize, size, Vector2i(radius)),
     #elif !defined(MAGNUM_TARGET_WEBGL)
+    #if defined(MAGNUM_TARGET_GLES) && defined(MAGNUM_TARGET_GLES2)
+    GlyphCache(GL::TextureFormat::RGB8, originalSize, size, Vector2i(radius)),
+    #else
     /* Luminance is not renderable in most cases */
     GlyphCache(GL::Context::current().isExtensionSupported<GL::Extensions::EXT::texture_rg>() ?
         GL::TextureFormat::Red : GL::TextureFormat::RGB, originalSize, size, Vector2i(radius)),
+    #endif
     #else
     GlyphCache(GL::TextureFormat::RGB, originalSize, size, Vector2i(radius)),
     #endif
@@ -50,12 +54,6 @@ DistanceFieldGlyphCache::DistanceFieldGlyphCache(const Vector2i& originalSize, c
 {
     #ifndef MAGNUM_TARGET_GLES
     MAGNUM_ASSERT_GL_EXTENSION_SUPPORTED(GL::Extensions::ARB::texture_rg);
-    #endif
-
-    #if defined(MAGNUM_TARGET_GLES2) && !defined(MAGNUM_TARGET_WEBGL)
-    /* Luminance is not renderable in most cases */
-    if(!GL::Context::current().isExtensionSupported<GL::Extensions::EXT::texture_rg>())
-        Warning() << "Text::DistanceFieldGlyphCache:" << GL::Extensions::EXT::texture_rg::string() << "not supported, using inefficient RGB format for glyph cache texture";
     #endif
 }
 
@@ -68,6 +66,12 @@ void DistanceFieldGlyphCache::setImage(const Vector2i& offset, const ImageView2D
         << GL::PixelFormat::Red << "but got" << format, );
     #else
     GL::TextureFormat internalFormat;
+    #if defined(MAGNUM_TARGET_GLES) && defined(MAGNUM_TARGET_GLES2)
+        internalFormat = GL::TextureFormat::RGB8;
+        CORRADE_ASSERT(format == GL::PixelFormat::RGB,
+            "Text::DistanceFieldGlyphCache::setImage(): expected"
+            << GL::PixelFormat::RGB << "but got" << format, );
+    #else
     #ifndef MAGNUM_TARGET_WEBGL
     if(GL::Context::current().isExtensionSupported<GL::Extensions::EXT::texture_rg>()) {
         internalFormat = GL::TextureFormat::Red;
@@ -83,12 +87,14 @@ void DistanceFieldGlyphCache::setImage(const Vector2i& offset, const ImageView2D
             << GL::PixelFormat::Luminance << "but got" << format, );
     }
     #endif
+    #endif
 
     GL::Texture2D input;
     input.setWrapping(GL::SamplerWrapping::ClampToEdge)
         .setMinificationFilter(GL::SamplerFilter::Linear)
         .setMagnificationFilter(GL::SamplerFilter::Linear)
-        .setImage(0, internalFormat, image);
+        .setStorage(1, internalFormat, image.size())
+        .setSubImage(0, {}, image);
 
     /* Create distance field from input texture */
     TextureTools::distanceField(input, texture(), Range2Di::fromSize(offset*scale, image.size()*scale), radius, image.size());
